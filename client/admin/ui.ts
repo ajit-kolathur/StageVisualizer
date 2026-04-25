@@ -57,7 +57,7 @@ export function renderUI(
     const plugins = groups.get(type);
     if (!plugins?.length) continue;
     const label = SECTION_NAMES[type] || type;
-    const collapsed = type === 'butterchurn' ? ' collapsed' : '';
+    const collapsed = '';
     const badge = TYPE_LABELS[type] || type;
 
     const buttons = plugins.map(p => {
@@ -86,14 +86,6 @@ export function renderUI(
       </div>
     </div>
   `;
-
-  // Section collapse toggle
-  container.querySelectorAll('.section-header').forEach(header => {
-    header.addEventListener('click', () => {
-      const plugins = header.nextElementSibling as HTMLElement;
-      plugins?.classList.toggle('collapsed');
-    });
-  });
 
   // Plugin click
   container.querySelectorAll('.plugin-btn').forEach(btn => {

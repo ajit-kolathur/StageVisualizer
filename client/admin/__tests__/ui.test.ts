@@ -93,12 +93,12 @@ describe('renderUI', () => {
     expect(input).toBeTruthy();
   });
 
-  it('MilkDrop section starts collapsed', async () => {
+  it('MilkDrop section is expanded by default', async () => {
     const renderUI = await loadUI();
     renderUI(container, mockSocket as any, { activePlugin: null, gain: 1, plugins: PLUGINS });
     const milkdropSection = container.querySelector('[data-type="butterchurn"]');
     expect(milkdropSection).toBeTruthy();
     const pluginList = milkdropSection!.querySelector('.section-plugins');
-    expect(pluginList!.classList.contains('collapsed')).toBe(true);
+    expect(pluginList!.classList.contains('collapsed')).toBe(false);
   });
 });
