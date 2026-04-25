@@ -5,7 +5,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx server/index.ts"
+    "dev": "tsx server/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "express": "5.2.1",
@@ -17,6 +19,7 @@
     "socket.io-client": "4.8.3",
     "tsx": "^4.21.0",
     "typescript": "6.0.3",
-    "vite": "8.0.10"
+    "vite": "8.0.10",
+    "vitest": "3.2.1"
   }
 }
