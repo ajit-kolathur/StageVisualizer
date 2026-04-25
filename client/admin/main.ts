@@ -10,6 +10,7 @@ const socket = io();
 let authenticated = false;
 let lastState: StateSyncPayload | null = null;
 let errorPluginId: string | null = null;
+let firstRender = true;
 
 function refresh() {
   if (!authenticated || !lastState) return;
@@ -71,6 +72,13 @@ function refresh() {
     if (status && modeHtml) {
       status.insertAdjacentHTML('afterend', modeHtml);
     }
+  }
+
+  // Scroll to active on first render after login
+  if (firstRender) {
+    firstRender = false;
+    const active = app.querySelector('.plugin-btn.active, .gig-row.active');
+    active?.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }
 
   // Mode toggle handler
