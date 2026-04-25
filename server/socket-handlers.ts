@@ -18,13 +18,13 @@ export function setupSocketHandlers(io: SocketIOServer, state: AppStateManager):
       const entry = state.setActivePlugin(payload.pluginId);
       if (!entry) return;
       io.emit('plugin-changed', { pluginId: entry.id, config: entry.config });
-      io.to('admin').emit('state-sync', state.getSync());
+      io.in('admin').emit('state-sync', state.getSync());
     });
 
     socket.on('set-gain', (payload: SetGainPayload) => {
       state.setGain(payload.gain);
       io.emit('gain-changed', { gain: state.gain });
-      io.to('admin').emit('state-sync', state.getSync());
+      io.in('admin').emit('state-sync', state.getSync());
     });
   });
 }
