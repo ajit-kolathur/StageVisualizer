@@ -1,0 +1,15 @@
+{
+  "name": "Press Photos",
+  "type": "slideshow",
+  "description": "Band press photo slideshow",
+  "images": [
+    "images/Blast-1.jpg",
+    "images/Blast-2.jpg",
+    "images/Blast-3.jpg",
+    "images/Blast-4.jpg"
+  ],
+  "interval": 8,
+  "transition": "fade",
+  "transitionDuration": 1.5,
+  "sizing": "cover"
+}

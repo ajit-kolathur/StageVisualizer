@@ -10,6 +10,13 @@ describe('createRenderer', () => {
     expect(r!.type).toBe('shader');
   });
 
+  it('returns SlideshowRenderer for slideshow type', async () => {
+    const { createRenderer } = await import('../factory.js');
+    const r = createRenderer('test', { name: 'T', type: 'slideshow', images: [], interval: 5, transition: 'fade' } as any);
+    expect(r).not.toBeNull();
+    expect(r!.type).toBe('slideshow');
+  });
+
   it('returns null for unsupported type', async () => {
     const { createRenderer } = await import('../factory.js');
     const r = createRenderer('test', { name: 'T', type: 'butterchurn', preset: 'x' } as any);
