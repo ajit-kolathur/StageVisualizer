@@ -42,7 +42,7 @@ export class PluginManager {
 
     this.currentEntry = entry;
 
-    this.plugin = createRenderer(entry.id, entry.config);
+    this.plugin = createRenderer(entry.id, entry.config, this.audioEngine);
     if (this.plugin) {
       await this.plugin.init(this.canvas, this.audioEngine.getData());
     }

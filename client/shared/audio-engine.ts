@@ -8,13 +8,19 @@ export class AudioEngine {
   private freqBuffer: Uint8Array<ArrayBuffer> | null = null;
   private timeBuffer: Uint8Array<ArrayBuffer> | null = null;
   private _denied = false;
+  private _audioContext: AudioContext | null = null;
+  private _sourceNode: MediaStreamAudioSourceNode | null = null;
   get micDenied() { return this._denied; }
+  get audioContext() { return this._audioContext; }
+  get sourceNode() { return this._sourceNode; }
 
   async init(): Promise<void> {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const ctx = new AudioContext();
+      this._audioContext = ctx;
       const source = ctx.createMediaStreamSource(stream);
+      this._sourceNode = source;
 
       this.gainNode = ctx.createGain();
       this.analyser = ctx.createAnalyser();

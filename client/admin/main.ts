@@ -7,14 +7,20 @@ const app = document.getElementById('app')!;
 const socket = io();
 
 let authenticated = false;
+let lastState: StateSyncPayload | null = null;
+
+// Cache state-sync data so we can render immediately after auth
+socket.on('state-sync', (data: StateSyncPayload) => {
+  lastState = data;
+  if (authenticated) {
+    renderUI(app, socket as any, data);
+  }
+});
 
 showAuth(app, socket as any, () => {
   authenticated = true;
-});
-
-socket.on('state-sync', (data: StateSyncPayload) => {
-  if (authenticated) {
-    renderUI(app, socket as any, data);
+  if (lastState) {
+    renderUI(app, socket as any, lastState);
   }
 });
 
