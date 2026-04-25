@@ -77,10 +77,43 @@ export interface StateSyncPayload {
   activePlugin: string | null;
   gain: number;
   plugins: PluginRegistryEntry[];
+  mode: 'generic' | 'gig';
+  setlists: SetlistSummary[];
+  activeSetlist: Setlist | null;
+  doneSet: number[];
 }
 
 export interface PluginChangedPayload { pluginId: string; config: PluginConfigBase; }
 export interface GainChangedPayload { gain: number; }
+
+// --- Setlist ---
+
+export interface SetlistEntry {
+  song: string;
+  pluginId: string;
+}
+
+export interface Setlist {
+  id: string;
+  name: string;
+  entries: SetlistEntry[];
+}
+
+export interface SetlistSummary {
+  id: string;
+  name: string;
+}
+
+// --- Gig Mode Payloads ---
+
+export interface SetModePayload {
+  mode: 'generic' | 'gig';
+  setlistId?: string;
+}
+
+export interface MarkDonePayload {
+  songIndex: number;
+}
 
 // --- Visualizer Plugin Interface ---
 

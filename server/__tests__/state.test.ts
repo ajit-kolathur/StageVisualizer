@@ -44,10 +44,52 @@ describe('AppStateManager', () => {
     const state = new AppStateManager(PLUGINS, '1234');
     state.setActivePlugin('fractal-pulse');
     state.setGain(0.8);
-    expect(state.getSync()).toEqual({
-      activePlugin: 'fractal-pulse',
-      gain: 0.8,
-      plugins: PLUGINS,
-    });
+    const sync = state.getSync();
+    expect(sync.activePlugin).toBe('fractal-pulse');
+    expect(sync.gain).toBe(0.8);
+    expect(sync.plugins).toBe(PLUGINS);
+    expect(sync.mode).toBe('generic');
+    expect(sync.setlists).toEqual([]);
+    expect(sync.activeSetlist).toBeNull();
+    expect(sync.doneSet).toEqual([]);
+  });
+
+  it('setMode switches to gig mode with valid setlist', () => {
+    const setlist = { id: 'demo', name: 'Demo', entries: [{ song: 'A', pluginId: 'fractal-pulse' }] };
+    const state = new AppStateManager(PLUGINS, '1234');
+    state.setSetlists([{ id: 'demo', name: 'Demo' }]);
+    state.setSetlistLoader((_id: string) => setlist);
+    expect(state.setMode('gig', 'demo')).toBe(true);
+    expect(state.mode).toBe('gig');
+    expect(state.activeSetlist).toEqual(setlist);
+    expect(state.getSync().doneSet).toEqual([]);
+  });
+
+  it('setMode returns false for invalid setlist', () => {
+    const state = new AppStateManager(PLUGINS, '1234');
+    state.setSetlistLoader(() => null);
+    expect(state.setMode('gig', 'nonexistent')).toBe(false);
+    expect(state.mode).toBe('generic');
+  });
+
+  it('setMode switches back to generic', () => {
+    const setlist = { id: 'demo', name: 'Demo', entries: [{ song: 'A', pluginId: 'fractal-pulse' }] };
+    const state = new AppStateManager(PLUGINS, '1234');
+    state.setSetlistLoader(() => setlist);
+    state.setSetlists([{ id: 'demo', name: 'Demo' }]);
+    state.setMode('gig', 'demo');
+    expect(state.setMode('generic')).toBe(true);
+    expect(state.mode).toBe('generic');
+    expect(state.activeSetlist).toBeNull();
+  });
+
+  it('markDone and unmarkDone toggle done state', () => {
+    const state = new AppStateManager(PLUGINS, '1234');
+    state.markDone(0);
+    expect(state.getSync().doneSet).toEqual([0]);
+    state.markDone(2);
+    expect(state.getSync().doneSet).toEqual([0, 2]);
+    state.unmarkDone(0);
+    expect(state.getSync().doneSet).toEqual([2]);
   });
 });

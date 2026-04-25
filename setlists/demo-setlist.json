@@ -1,0 +1,9 @@
+{
+  "name": "Demo Setlist",
+  "entries": [
+    { "song": "Opening Jam", "pluginId": "butterchurn:Flexi - mindblob [where it's at now] 2" },
+    { "song": "Electric Dreams", "pluginId": "fractal-pulse" },
+    { "song": "Slow Dance", "pluginId": "press-photos" },
+    { "song": "Finale", "pluginId": "butterchurn:Zylot - True Visionary (Final Mix)" }
+  ]
+}

@@ -43,7 +43,7 @@ describe('Socket.IO handlers', () => {
   it('sends state-sync on connection', async () => {
     const client = connect();
     const sync = await waitFor<StateSyncPayload>(client, 'state-sync');
-    expect(sync).toEqual({
+    expect(sync).toMatchObject({
       activePlugin: state.activePlugin,
       gain: state.gain,
       plugins: PLUGINS,

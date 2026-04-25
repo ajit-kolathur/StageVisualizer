@@ -9,6 +9,7 @@ import { scanPlugins } from './plugin-scanner.js';
 import { enumerateButterchurnPresets } from './butterchurn-enumerator.js';
 import { AppStateManager } from './state.js';
 import { setupSocketHandlers } from './socket-handlers.js';
+import { loadSetlists, loadSetlist } from './setlist-loader.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const root = resolve(__dirname, '..');
@@ -31,7 +32,13 @@ const pluginRegistry = [...physicalPlugins, ...virtualPlugins];
 console.log(`[server] Found ${pluginRegistry.length} plugin(s) (${physicalPlugins.length} physical, ${virtualPlugins.length} virtual)`);
 
 // Initialize state and socket handlers
+const setlistsDir = join(root, 'setlists');
+const setlists = loadSetlists(setlistsDir);
+console.log(`[server] Found ${setlists.length} setlist(s)`);
+
 const state = new AppStateManager(pluginRegistry, config.pin ?? '0000');
+state.setSetlists(setlists.map(s => ({ id: s.id, name: s.name })));
+state.setSetlistLoader((id) => loadSetlist(setlistsDir, id));
 setupSocketHandlers(io, state);
 
 // REST API
