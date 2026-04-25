@@ -9,7 +9,9 @@ const mockVisualizer = {
 
 vi.mock('butterchurn', () => ({
   default: {
-    createVisualizer: vi.fn(() => mockVisualizer),
+    default: {
+      createVisualizer: vi.fn(() => mockVisualizer),
+    },
   },
 }));
 
@@ -50,7 +52,7 @@ describe('ButterchurnRenderer', () => {
     const renderer = await makeRenderer();
     await renderer.init(canvas, audioData);
 
-    const butterchurn = (await import('butterchurn')).default;
+    const butterchurn = (await import('butterchurn')).default.default;
     expect(butterchurn.createVisualizer).toHaveBeenCalled();
     expect(mockVisualizer.connectAudio).toHaveBeenCalled();
     expect(mockVisualizer.loadPreset).toHaveBeenCalledWith(mockPreset, 2);

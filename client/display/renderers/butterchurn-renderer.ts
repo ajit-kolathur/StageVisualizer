@@ -18,8 +18,9 @@ export class ButterchurnRenderer implements VisualizerPlugin {
     const ctx = this.audioEngine.audioContext;
     if (!ctx) return;
 
-    const butterchurn = (await import('butterchurn')).default;
-    this.visualizer = butterchurn.createVisualizer(ctx, canvas, {
+    const mod = await import('butterchurn');
+    const bc = mod.default?.default ?? mod.default ?? mod;
+    this.visualizer = bc.createVisualizer(ctx, canvas, {
       width: canvas.width,
       height: canvas.height,
     });
