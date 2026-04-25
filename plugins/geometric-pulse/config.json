@@ -1,0 +1,8 @@
+{
+  "name": "Geometric Pulse",
+  "type": "shader",
+  "description": "Geometric shapes that pulse and rotate with bass",
+  "author": "StageVisualizer",
+  "tags": ["geometric", "shapes", "bass-reactive"],
+  "shader": "shader.frag"
+}

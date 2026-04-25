@@ -1,0 +1,8 @@
+{
+  "name": "Plasma Flow",
+  "type": "shader",
+  "description": "Lava lamp plasma effect driven by audio",
+  "author": "StageVisualizer",
+  "tags": ["plasma", "lava", "audio-reactive"],
+  "shader": "shader.frag"
+}

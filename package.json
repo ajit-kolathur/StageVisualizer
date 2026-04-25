@@ -6,6 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server/index.ts",
+    "build": "vite build",
+    "start": "NODE_ENV=production tsx server/index.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
