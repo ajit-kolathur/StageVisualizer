@@ -5,6 +5,7 @@ interface UIState {
   activePlugin: string | null;
   gain: number;
   plugins: PluginRegistryEntry[];
+  errorPluginId?: string | null;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -30,9 +31,17 @@ export function renderUI(
     })
     .join('');
 
+  const errorPlugin = state.errorPluginId
+    ? state.plugins.find(p => p.id === state.errorPluginId)
+    : null;
+  const errorHtml = errorPlugin
+    ? `<div class="error-notification">⚠ Error: ${errorPlugin.config.name} crashed</div>`
+    : '';
+
   container.innerHTML = `
     <div class="admin-ui">
       <div class="status connected">Connected</div>
+      ${errorHtml}
       <h2>Plugins</h2>
       <div class="plugin-list">${pluginButtons}</div>
       <div class="gain-control">

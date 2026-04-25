@@ -207,4 +207,85 @@ describe('PluginManager', () => {
       mgr.dispose();
     });
   });
+
+  describe('error handling', () => {
+    it('resets error count on successful render', async () => {
+      const mgr = await createManager();
+      await mgr.loadPlugin('test-gradient');
+
+      const mockPlugin: VisualizerPlugin = {
+        type: 'shader', init: vi.fn(), render: vi.fn(), resize: vi.fn(), destroy: vi.fn(),
+      };
+      (mgr as unknown as { plugin: VisualizerPlugin }).plugin = mockPlugin;
+
+      // Render a few frames successfully
+      rafCallbacks[rafCallbacks.length - 1](16.67);
+      rafCallbacks[rafCallbacks.length - 1](33.34);
+      expect(mockPlugin.render).toHaveBeenCalledTimes(2);
+      expect(mockPlugin.destroy).not.toHaveBeenCalled();
+      mgr.dispose();
+    });
+
+    it('loads fallback after 3 consecutive render errors', async () => {
+      const { createRenderer } = await import('../renderers/factory.js');
+      const mgr = await createManager();
+      await mgr.loadPlugin('test-gradient');
+
+      const errorPlugin: VisualizerPlugin = {
+        type: 'shader', init: vi.fn(), resize: vi.fn(), destroy: vi.fn(),
+        render: vi.fn(() => { throw new Error('render crash'); }),
+      };
+      (mgr as unknown as { plugin: VisualizerPlugin }).plugin = errorPlugin;
+
+      // Trigger 3 consecutive errors
+      for (let i = 0; i < 3; i++) {
+        rafCallbacks[rafCallbacks.length - 1](i * 16.67);
+      }
+
+      expect(errorPlugin.destroy).toHaveBeenCalled();
+      // After fallback, a new loadPlugin call should have been made for _fallback
+      expect(fetch).toHaveBeenCalledWith('/api/plugins');
+      mgr.dispose();
+    });
+
+    it('calls onError callback when fallback is triggered', async () => {
+      const mgr = await createManager();
+      const onError = vi.fn();
+      mgr.onError = onError;
+      await mgr.loadPlugin('test-gradient');
+
+      const errorPlugin: VisualizerPlugin = {
+        type: 'shader', init: vi.fn(), resize: vi.fn(), destroy: vi.fn(),
+        render: vi.fn(() => { throw new Error('crash'); }),
+      };
+      (mgr as unknown as { plugin: VisualizerPlugin }).plugin = errorPlugin;
+
+      for (let i = 0; i < 3; i++) {
+        rafCallbacks[rafCallbacks.length - 1](i * 16.67);
+      }
+
+      expect(onError).toHaveBeenCalledWith('test-gradient');
+      mgr.dispose();
+    });
+
+    it('loads fallback immediately on init failure', async () => {
+      const { createRenderer } = await import('../renderers/factory.js');
+      const onError = vi.fn();
+
+      // Make createRenderer return a plugin that fails on init
+      (createRenderer as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        type: 'shader',
+        init: vi.fn().mockRejectedValue(new Error('init crash')),
+        render: vi.fn(), resize: vi.fn(), destroy: vi.fn(),
+      });
+
+      const mgr = await createManager();
+      mgr.onError = onError;
+
+      await mgr.loadPlugin('test-gradient');
+
+      expect(onError).toHaveBeenCalledWith('test-gradient');
+      mgr.dispose();
+    });
+  });
 });

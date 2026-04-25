@@ -8,10 +8,11 @@ const socket = io();
 
 let authenticated = false;
 let lastState: StateSyncPayload | null = null;
+let errorPluginId: string | null = null;
 
 function refresh() {
   if (authenticated && lastState) {
-    renderUI(app, socket as any, lastState);
+    renderUI(app, socket as any, { ...lastState, errorPluginId });
   }
 }
 
@@ -32,6 +33,11 @@ socket.on('gain-changed', (data: { gain: number }) => {
     lastState.gain = data.gain;
     refresh();
   }
+});
+
+socket.on('plugin-error', (data: { pluginId: string }) => {
+  errorPluginId = data.pluginId;
+  refresh();
 });
 
 showAuth(app, socket as any, () => {

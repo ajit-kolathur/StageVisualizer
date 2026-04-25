@@ -165,4 +165,21 @@ describe('Socket.IO handlers', () => {
 
     admin.disconnect();
   });
+
+  it('relays plugin-error to admin room', async () => {
+    const admin = connect();
+    await waitFor(admin, 'state-sync');
+    admin.emit('auth', { pin: '1234' });
+    await waitFor(admin, 'auth-result');
+
+    const display = connect();
+    await waitFor(display, 'state-sync');
+
+    display.emit('plugin-error', { pluginId: 'fractal-pulse' });
+    const error = await waitFor<{ pluginId: string }>(admin, 'plugin-error');
+    expect(error.pluginId).toBe('fractal-pulse');
+
+    admin.disconnect();
+    display.disconnect();
+  });
 });

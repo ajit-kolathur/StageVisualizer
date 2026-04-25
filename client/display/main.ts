@@ -11,6 +11,14 @@ canvas.height = window.innerHeight;
 
 const manager = new PluginManager(canvas, engine);
 
+manager.onError = (pluginId: string) => {
+  socket.emit('plugin-error', { pluginId });
+};
+
+window.addEventListener('beforeunload', (e) => {
+  e.preventDefault();
+});
+
 let pluginList: PluginRegistryEntry[] = [];
 let initialized = false;
 

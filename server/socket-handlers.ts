@@ -26,5 +26,9 @@ export function setupSocketHandlers(io: SocketIOServer, state: AppStateManager):
       io.emit('gain-changed', { gain: state.gain });
       io.in('admin').emit('state-sync', state.getSync());
     });
+
+    socket.on('plugin-error', (payload: { pluginId: string }) => {
+      io.in('admin').emit('plugin-error', payload);
+    });
   });
 }

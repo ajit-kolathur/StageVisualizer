@@ -1,0 +1,8 @@
+{
+  "name": "Fallback",
+  "type": "slideshow",
+  "images": ["fallback.jpg"],
+  "interval": 9999,
+  "transition": "cut",
+  "sizing": "contain"
+}

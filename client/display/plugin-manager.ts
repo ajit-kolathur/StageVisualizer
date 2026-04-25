@@ -1,7 +1,10 @@
-import type { AudioData, PluginRegistryEntry, VisualizerPlugin } from '../shared/types.js';
-import type { AudioEngine } from '../shared/audio-engine.js';
-import { createRenderer } from './renderers/factory.js';
+import { AudioEngine } from '../shared/audio-engine.js';
 import { TransitionManager } from './transition.js';
+import { createRenderer } from './renderers/factory.js';
+import type { PluginRegistryEntry, VisualizerPlugin } from '../shared/types.js';
+
+const FALLBACK_ID = '_fallback';
+const MAX_ERRORS = 3;
 
 export class PluginManager {
   private canvas: HTMLCanvasElement;
@@ -11,6 +14,8 @@ export class PluginManager {
   private currentEntry: PluginRegistryEntry | null = null;
   private transition: TransitionManager;
   private switching = false;
+  private errorCount = 0;
+  onError: ((pluginId: string) => void) | null = null;
 
   constructor(canvas: HTMLCanvasElement, audioEngine: AudioEngine) {
     this.canvas = canvas;
@@ -44,9 +49,20 @@ export class PluginManager {
 
     this.plugin = createRenderer(entry.id, entry.config, this.audioEngine);
     if (this.plugin) {
-      await this.plugin.init(this.canvas, this.audioEngine.getData());
+      try {
+        await this.plugin.init(this.canvas, this.audioEngine.getData());
+      } catch {
+        this.plugin = null;
+        this.currentEntry = null;
+        this.onError?.(pluginId);
+        if (pluginId !== FALLBACK_ID) {
+          await this.loadPlugin(FALLBACK_ID).catch(() => {});
+        }
+        return;
+      }
     }
 
+    this.errorCount = 0;
     this.startLoop();
   }
 
@@ -60,7 +76,18 @@ export class PluginManager {
   private startLoop(): void {
     const loop = (timestamp: number) => {
       this.animId = requestAnimationFrame(loop);
-      this.plugin?.render(timestamp, this.audioEngine.getData());
+      try {
+        this.plugin?.render(timestamp, this.audioEngine.getData());
+        this.errorCount = 0;
+      } catch {
+        this.errorCount++;
+        if (this.errorCount >= MAX_ERRORS) {
+          const failedId = this.currentEntry?.id || 'unknown';
+          this.destroyPlugin();
+          this.onError?.(failedId);
+          this.loadPlugin(FALLBACK_ID).catch(() => {});
+        }
+      }
     };
     this.animId = requestAnimationFrame(loop);
   }

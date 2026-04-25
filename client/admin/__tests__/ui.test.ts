@@ -127,6 +127,18 @@ describe('renderUI', () => {
     });
     expect(container.innerHTML.toLowerCase()).toContain('connect');
   });
+
+  it('shows error notification when errorPluginId is set', async () => {
+    const renderUI = await loadUI();
+    renderUI(container as any, mockSocket as any, {
+      activePlugin: null,
+      gain: 1,
+      plugins: PLUGINS,
+      errorPluginId: 'fractal-pulse',
+    });
+    expect(container.innerHTML.toLowerCase()).toContain('error');
+    expect(container.innerHTML).toContain('Fractal Pulse');
+  });
 });
 
 // Minimal DOM parser for testing innerHTML output

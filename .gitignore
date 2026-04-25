@@ -29,3 +29,7 @@ npm-debug.log*
 
 # Plugin images (large binary files)
 plugins/*/images/
+
+# Fallback plugin images (local only)
+plugins/_fallback/*.jpg
+plugins/_fallback/*.png
