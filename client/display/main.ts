@@ -16,6 +16,12 @@ let initialized = false;
 
 const socket = io();
 
+socket.on('connect', () => {
+  if (!initialized) {
+    engine.init().then(() => { initialized = true; }).catch(console.error);
+  }
+});
+
 socket.on('state-sync', async (data: StateSyncPayload) => {
   pluginList = data.plugins;
   engine.setGain(data.gain);
@@ -34,18 +40,6 @@ socket.on('gain-changed', (data: GainChangedPayload) => {
   engine.setGain(data.gain);
 });
 
-// Initialize audio engine if no state-sync arrives with an active plugin
-async function start() {
-  await engine.init();
-  initialized = true;
-}
-
-// Fallback: if socket connects but no active plugin, still init audio
-socket.on('connect', () => {
-  if (!initialized) start().catch(console.error);
-});
-
-// Keyboard shortcuts: 1-9 to switch plugins by index
 document.addEventListener('keydown', (e) => {
   const idx = parseInt(e.key, 10) - 1;
   if (idx >= 0 && idx < pluginList.length) {

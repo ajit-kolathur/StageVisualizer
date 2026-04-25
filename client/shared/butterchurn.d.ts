@@ -1,15 +1,17 @@
 declare module 'butterchurn' {
-  const butterchurn: {
+  interface ButterchurnVisualizer {
+    connectAudio(node: AudioNode): void;
+    loadPreset(preset: object, blendTime: number): void;
+    setRendererSize(width: number, height: number): void;
+    render(): void;
+  }
+  interface Butterchurn {
     createVisualizer(
       audioContext: AudioContext,
       canvas: HTMLCanvasElement,
       options: { width: number; height: number },
-    ): {
-      connectAudio(node: AudioNode): void;
-      loadPreset(preset: object, blendTime: number): void;
-      setRendererSize(width: number, height: number): void;
-      render(): void;
-    };
-  };
+    ): ButterchurnVisualizer;
+  }
+  const butterchurn: { default: Butterchurn };
   export default butterchurn;
 }

@@ -9,22 +9,36 @@ const socket = io();
 let authenticated = false;
 let lastState: StateSyncPayload | null = null;
 
-// Cache state-sync data so we can render immediately after auth
+function refresh() {
+  if (authenticated && lastState) {
+    renderUI(app, socket as any, lastState);
+  }
+}
+
 socket.on('state-sync', (data: StateSyncPayload) => {
   lastState = data;
-  if (authenticated) {
-    renderUI(app, socket as any, data);
+  refresh();
+});
+
+socket.on('plugin-changed', (data: { pluginId: string }) => {
+  if (lastState) {
+    lastState.activePlugin = data.pluginId;
+    refresh();
+  }
+});
+
+socket.on('gain-changed', (data: { gain: number }) => {
+  if (lastState) {
+    lastState.gain = data.gain;
+    refresh();
   }
 });
 
 showAuth(app, socket as any, () => {
   authenticated = true;
-  if (lastState) {
-    renderUI(app, socket as any, lastState);
-  }
+  refresh();
 });
 
-// Connection status updates
 socket.on('disconnect', () => {
   const status = app.querySelector('.status');
   if (status) {
