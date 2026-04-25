@@ -15,3 +15,33 @@ declare module 'butterchurn' {
   const butterchurn: { default: Butterchurn };
   export default butterchurn;
 }
+
+declare module 'butterchurn-presets' {
+  function getPresets(): Record<string, object>;
+  export default { getPresets };
+}
+
+declare module 'butterchurn-presets/lib/butterchurnPresetsExtra.min' {
+  function getPresets(): Record<string, object>;
+  export default { getPresets };
+}
+
+declare module 'butterchurn-presets/lib/butterchurnPresetsExtra2.min' {
+  function getPresets(): Record<string, object>;
+  export default { getPresets };
+}
+
+declare module 'butterchurn-presets' {
+  function getPresets(): Record<string, object>;
+  export default { getPresets };
+}
+
+declare module 'butterchurn-presets/lib/butterchurnPresetsExtra.min' {
+  function getPresets(): Record<string, object>;
+  export default { getPresets };
+}
+
+declare module 'butterchurn-presets/lib/butterchurnPresetsExtra2.min' {
+  function getPresets(): Record<string, object>;
+  export default { getPresets };
+}

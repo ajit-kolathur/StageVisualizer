@@ -1,6 +1,23 @@
 import type { AudioData, ButterchurnPluginConfig, VisualizerPlugin } from '../../shared/types.js';
 import type { AudioEngine } from '../../shared/audio-engine.js';
 
+let cachedPresets: Record<string, any> | null = null;
+
+async function loadPresetByName(name: string): Promise<any> {
+  if (!cachedPresets) {
+    const [base, extra, extra2] = await Promise.all([
+      import('butterchurn-presets'),
+      import('butterchurn-presets/lib/butterchurnPresetsExtra.min'),
+      import('butterchurn-presets/lib/butterchurnPresetsExtra2.min'),
+    ]);
+    const get = (m: any) => (m.default?.getPresets ?? m.getPresets)();
+    cachedPresets = { ...get(base), ...get(extra), ...get(extra2) };
+  }
+  const preset = cachedPresets![name];
+  if (!preset) throw new Error(`Preset not found: ${name}`);
+  return preset;
+}
+
 export class ButterchurnRenderer implements VisualizerPlugin {
   readonly type = 'butterchurn' as const;
   private visualizer: any = null;
@@ -28,8 +45,15 @@ export class ButterchurnRenderer implements VisualizerPlugin {
     const source = this.audioEngine.sourceNode;
     if (source) this.visualizer.connectAudio(source);
 
-    const res = await fetch(`/plugins/${this.pluginId}/preset.json`);
-    const preset = res.ok ? await res.json() : null;
+    let preset: any;
+    if (this.pluginId.startsWith('butterchurn:')) {
+      const presetName = this.pluginId.slice('butterchurn:'.length);
+      preset = await loadPresetByName(presetName);
+    } else {
+      const res = await fetch(`/plugins/${this.pluginId}/preset.json`);
+      preset = res.ok ? await res.json() : null;
+    }
+
     if (preset) {
       this.visualizer.loadPreset(preset, this.config.blendTime ?? 2);
     }

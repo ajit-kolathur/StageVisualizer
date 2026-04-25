@@ -16,6 +16,17 @@ vi.mock('butterchurn', () => ({
 }));
 
 const mockPreset = { baseVals: { rating: 5 } };
+const mockBundlePreset = { baseVals: { rating: 3 }, shapes: [] };
+
+vi.mock('butterchurn-presets', () => ({
+  default: { getPresets: () => ({ 'Flexi - mindblob': mockBundlePreset }) },
+}));
+vi.mock('butterchurn-presets/lib/butterchurnPresetsExtra.min', () => ({
+  default: { getPresets: () => ({ 'Extra Preset': { baseVals: {} } }) },
+}));
+vi.mock('butterchurn-presets/lib/butterchurnPresetsExtra2.min', () => ({
+  default: { getPresets: () => ({ 'Extra2 Preset': { baseVals: {} } }) },
+}));
 
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn(() =>
@@ -79,5 +90,39 @@ describe('ButterchurnRenderer', () => {
     mockVisualizer.render.mockClear();
     renderer.render(0, audioData);
     expect(mockVisualizer.render).not.toHaveBeenCalled();
+  });
+
+  it('loads preset from bundles for virtual plugin (butterchurn: prefix)', async () => {
+    const { ButterchurnRenderer } = await import('../butterchurn-renderer.js');
+    const renderer = new ButterchurnRenderer('butterchurn:Flexi - mindblob', {
+      name: 'Flexi - mindblob',
+      type: 'butterchurn',
+      preset: 'Flexi - mindblob',
+      blendTime: 2,
+    }, mockAudioEngine as any);
+    await renderer.init(canvas, audioData);
+
+    expect(fetch).not.toHaveBeenCalled();
+    expect(mockVisualizer.loadPreset).toHaveBeenCalledWith(mockBundlePreset, 2);
+  });
+
+  it('still fetches preset.json for physical plugin (no prefix)', async () => {
+    const renderer = await makeRenderer();
+    await renderer.init(canvas, audioData);
+
+    expect(fetch).toHaveBeenCalledWith('/plugins/milkdrop-cosmic/preset.json');
+    expect(mockVisualizer.loadPreset).toHaveBeenCalledWith(mockPreset, 2);
+  });
+
+  it('throws when virtual preset not found in bundles', async () => {
+    const { ButterchurnRenderer } = await import('../butterchurn-renderer.js');
+    const renderer = new ButterchurnRenderer('butterchurn:Nonexistent Preset', {
+      name: 'Nonexistent',
+      type: 'butterchurn',
+      preset: 'Nonexistent Preset',
+      blendTime: 2,
+    }, mockAudioEngine as any);
+
+    await expect(renderer.init(canvas, audioData)).rejects.toThrow('Preset not found');
   });
 });
