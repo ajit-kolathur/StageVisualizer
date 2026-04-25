@@ -1,3 +1,4 @@
+#version 300 es
 precision mediump float;
 
 uniform float u_time;
@@ -7,6 +8,8 @@ uniform float u_mids;
 uniform float u_treble;
 uniform float u_volume;
 
+out vec4 fragColor;
+
 void main() {
   vec2 uv = gl_FragCoord.xy / u_resolution;
   vec3 color = vec3(
@@ -15,5 +18,5 @@ void main() {
     0.5 + u_treble * 0.5
   );
   color *= 0.6 + u_volume * 0.4;
-  gl_FragColor = vec4(color, 1.0);
+  fragColor = vec4(color, 1.0);
 }
