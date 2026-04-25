@@ -1,6 +1,7 @@
+import { io } from 'socket.io-client';
 import { AudioEngine } from '../shared/audio-engine.js';
 import { PluginManager } from './plugin-manager.js';
-import type { PluginRegistryEntry } from '../shared/types.js';
+import type { PluginRegistryEntry, StateSyncPayload, PluginChangedPayload, GainChangedPayload } from '../shared/types.js';
 
 const canvas = document.getElementById('visualizer') as HTMLCanvasElement;
 const engine = new AudioEngine();
@@ -11,19 +12,38 @@ canvas.height = window.innerHeight;
 const manager = new PluginManager(canvas, engine);
 
 let pluginList: PluginRegistryEntry[] = [];
+let initialized = false;
 
+const socket = io();
+
+socket.on('state-sync', async (data: StateSyncPayload) => {
+  pluginList = data.plugins;
+  engine.setGain(data.gain);
+  if (!initialized && data.activePlugin) {
+    initialized = true;
+    await engine.init();
+    manager.switchPlugin(data.activePlugin);
+  }
+});
+
+socket.on('plugin-changed', (data: PluginChangedPayload) => {
+  manager.switchPlugin(data.pluginId);
+});
+
+socket.on('gain-changed', (data: GainChangedPayload) => {
+  engine.setGain(data.gain);
+});
+
+// Initialize audio engine if no state-sync arrives with an active plugin
 async function start() {
   await engine.init();
-  try {
-    const res = await fetch('/api/plugins');
-    pluginList = await res.json();
-    if (pluginList.length > 0) {
-      await manager.switchPlugin(pluginList[0].id);
-    }
-  } catch (e) {
-    console.warn('No plugins available:', e);
-  }
+  initialized = true;
 }
+
+// Fallback: if socket connects but no active plugin, still init audio
+socket.on('connect', () => {
+  if (!initialized) start().catch(console.error);
+});
 
 // Keyboard shortcuts: 1-9 to switch plugins by index
 document.addEventListener('keydown', (e) => {
@@ -32,7 +52,5 @@ document.addEventListener('keydown', (e) => {
     manager.switchPlugin(pluginList[idx].id);
   }
 });
-
-start().catch(console.error);
 
 export { manager, engine };

@@ -6,6 +6,8 @@ import { readFileSync, existsSync } from 'fs';
 import { resolve, join } from 'path';
 import { fileURLToPath } from 'url';
 import { scanPlugins } from './plugin-scanner.js';
+import { AppStateManager } from './state.js';
+import { setupSocketHandlers } from './socket-handlers.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const root = resolve(__dirname, '..');
@@ -24,6 +26,10 @@ const io = new SocketIOServer(httpServer);
 // Scan plugins on startup
 const pluginRegistry = scanPlugins(join(root, 'plugins'));
 console.log(`[server] Found ${pluginRegistry.length} plugin(s)`);
+
+// Initialize state and socket handlers
+const state = new AppStateManager(pluginRegistry, config.pin ?? '0000');
+setupSocketHandlers(io, state);
 
 // REST API
 app.get('/api/plugins', (_req, res) => { res.json(pluginRegistry); });
