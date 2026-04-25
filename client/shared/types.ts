@@ -55,7 +55,7 @@ export type PluginConfig =
 
 export interface PluginRegistryEntry {
   id: string;
-  config: PluginConfigBase;
+  config: PluginConfig | PluginConfigBase;
 }
 
 // --- App State ---

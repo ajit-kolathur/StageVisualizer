@@ -6,6 +6,7 @@ import { readFileSync, existsSync } from 'fs';
 import { resolve, join } from 'path';
 import { fileURLToPath } from 'url';
 import { scanPlugins } from './plugin-scanner.js';
+import { enumerateButterchurnPresets } from './butterchurn-enumerator.js';
 import { AppStateManager } from './state.js';
 import { setupSocketHandlers } from './socket-handlers.js';
 
@@ -24,8 +25,10 @@ const httpServer = createServer(app);
 const io = new SocketIOServer(httpServer);
 
 // Scan plugins on startup
-const pluginRegistry = scanPlugins(join(root, 'plugins'));
-console.log(`[server] Found ${pluginRegistry.length} plugin(s)`);
+const physicalPlugins = scanPlugins(join(root, 'plugins'));
+const virtualPlugins = enumerateButterchurnPresets();
+const pluginRegistry = [...physicalPlugins, ...virtualPlugins];
+console.log(`[server] Found ${pluginRegistry.length} plugin(s) (${physicalPlugins.length} physical, ${virtualPlugins.length} virtual)`);
 
 // Initialize state and socket handlers
 const state = new AppStateManager(pluginRegistry, config.pin ?? '0000');
