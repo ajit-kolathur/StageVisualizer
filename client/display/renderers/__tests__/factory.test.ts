@@ -1,0 +1,18 @@
+import { describe, it, expect, vi, afterEach } from 'vitest';
+
+afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+
+describe('createRenderer', () => {
+  it('returns ShaderRenderer for shader type', async () => {
+    const { createRenderer } = await import('../factory.js');
+    const r = createRenderer('test', { name: 'T', type: 'shader', shader: 's.frag' } as any);
+    expect(r).not.toBeNull();
+    expect(r!.type).toBe('shader');
+  });
+
+  it('returns null for unsupported type', async () => {
+    const { createRenderer } = await import('../factory.js');
+    const r = createRenderer('test', { name: 'T', type: 'butterchurn', preset: 'x' } as any);
+    expect(r).toBeNull();
+  });
+});

@@ -1,5 +1,6 @@
 import type { AudioData, PluginRegistryEntry, VisualizerPlugin } from '../shared/types.js';
 import type { AudioEngine } from '../shared/audio-engine.js';
+import { createRenderer } from './renderers/factory.js';
 
 export class PluginManager {
   private canvas: HTMLCanvasElement;
@@ -24,9 +25,10 @@ export class PluginManager {
 
     this.currentEntry = entry;
 
-    // Renderer creation deferred to Step 5 — store config only for now
-    // When renderers exist: this.plugin = createRenderer(entry.config);
-    // await this.plugin.init(this.canvas, this.audioEngine.getData());
+    this.plugin = createRenderer(entry.id, entry.config);
+    if (this.plugin) {
+      await this.plugin.init(this.canvas, this.audioEngine.getData());
+    }
 
     this.startLoop();
   }

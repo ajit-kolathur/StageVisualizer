@@ -2,6 +2,17 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { AudioEngine } from '../../shared/audio-engine.js';
 import type { VisualizerPlugin, AudioData } from '../../shared/types.js';
 
+// Mock the renderer factory so plugin-manager tests don't need WebGL
+vi.mock('../renderers/factory.js', () => ({
+  createRenderer: vi.fn(() => ({
+    type: 'shader',
+    init: vi.fn().mockResolvedValue(undefined),
+    render: vi.fn(),
+    resize: vi.fn(),
+    destroy: vi.fn(),
+  })),
+}));
+
 const EMPTY_AUDIO: AudioData = {
   frequencyData: new Uint8Array(1024),
   timeDomainData: new Uint8Array(1024),
@@ -20,7 +31,6 @@ const TEST_PLUGINS = [
   { id: 'test-gradient', config: { name: 'Test Gradient', type: 'shader' as const } },
 ];
 
-// Must stub browser globals before importing PluginManager
 let resizeHandlers: (() => void)[];
 let rafCallbacks: ((ts: number) => void)[];
 
@@ -47,7 +57,6 @@ afterEach(() => {
 });
 
 describe('PluginManager', () => {
-  // Dynamic import so stubs are in place
   async function createManager() {
     const { PluginManager } = await import('../plugin-manager.js');
     return new PluginManager(mockCanvas(), mockAudioEngine());

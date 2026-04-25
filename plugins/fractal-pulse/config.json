@@ -1,0 +1,8 @@
+{
+  "name": "Fractal Pulse",
+  "type": "shader",
+  "description": "Audio-reactive Mandelbrot fractal with zoom and color shifting",
+  "author": "StageVisualizer",
+  "tags": ["fractal", "mandelbrot", "audio-reactive"],
+  "shader": "shader.frag"
+}
