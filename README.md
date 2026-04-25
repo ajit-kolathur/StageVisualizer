@@ -65,17 +65,15 @@ Edit `server.config.json` in the project root:
 
 ## Included Plugins
 
-| Plugin | Type | Description |
-|--------|------|-------------|
-| Test Gradient | shader | Simple audio-reactive gradient |
-| Fractal Pulse | shader | Mandelbrot fractal with zoom and color shifting |
-| Kaleidoscope Wave | shader | Kaleidoscope with wave distortion |
-| Plasma Flow | shader | Lava lamp plasma effect |
-| Geometric Pulse | shader | Concentric polygon rings pulsing with bass |
-| MilkDrop Cosmic | butterchurn | Psychedelic MilkDrop preset |
-| MilkDrop Neon | butterchurn | Neon-styled MilkDrop preset |
-| Particle Storm | threejs | 3D particle system reacting to bass/treble |
-| Press Photos | slideshow | Band photo slideshow with fade transitions |
+**Shaders** (5): Test Gradient, Fractal Pulse, Kaleidoscope Wave, Plasma Flow, Geometric Pulse
+
+**MilkDrop / Butterchurn** (52): A curated collection of classic MilkDrop presets including works by Flexi, Geiss, Martin, Rovastar, Stahlregen, Unchained, and more.
+
+**Three.js** (1): Particle Storm — 3D particle system reacting to bass/treble
+
+**Slideshow** (1): Press Photos — band photo slideshow with fade transitions
+
+60 plugins total.
 
 ## Creating Plugins
 

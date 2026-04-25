@@ -23,11 +23,17 @@ export class SlideshowRenderer implements VisualizerPlugin {
     this.width = canvas.width;
     this.height = canvas.height;
 
+    // Clear the underlying canvas so old plugin frames don't bleed through
+    const gl = canvas.getContext?.('webgl2') as WebGL2RenderingContext | null;
+    if (gl) { gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT); }
+    const ctx2d = canvas.getContext?.('2d');
+    if (ctx2d) { ctx2d.fillStyle = '#000'; ctx2d.fillRect(0, 0, this.width, this.height); }
+
     // Create a separate canvas to avoid tainting the shared canvas's WebGL context
     const own = document.createElement('canvas');
     own.width = this.width;
     own.height = this.height;
-    own.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:1;';
+    own.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:1;background:#000;';
     canvas.parentElement?.appendChild(own);
     this.ownCanvas = own;
     this.ctx = own.getContext('2d');
