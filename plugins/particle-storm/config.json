@@ -1,0 +1,6 @@
+{
+  "name": "Particle Storm",
+  "type": "threejs",
+  "description": "3D particle system reacting to bass and treble",
+  "scene": "scene.js"
+}
