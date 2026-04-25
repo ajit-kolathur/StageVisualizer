@@ -1,0 +1,151 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import type { AudioEngine } from '../../shared/audio-engine.js';
+import type { VisualizerPlugin, AudioData } from '../../shared/types.js';
+
+const EMPTY_AUDIO: AudioData = {
+  frequencyData: new Uint8Array(1024),
+  timeDomainData: new Uint8Array(1024),
+  bass: 0, mids: 0, treble: 0, volume: 0,
+};
+
+function mockAudioEngine(): AudioEngine {
+  return { getData: () => EMPTY_AUDIO, init: vi.fn(), setGain: vi.fn(), micDenied: false } as unknown as AudioEngine;
+}
+
+function mockCanvas(): HTMLCanvasElement {
+  return { width: 800, height: 600, getContext: vi.fn() } as unknown as HTMLCanvasElement;
+}
+
+const TEST_PLUGINS = [
+  { id: 'test-gradient', config: { name: 'Test Gradient', type: 'shader' as const } },
+];
+
+// Must stub browser globals before importing PluginManager
+let resizeHandlers: (() => void)[];
+let rafCallbacks: ((ts: number) => void)[];
+
+beforeEach(() => {
+  resizeHandlers = [];
+  rafCallbacks = [];
+
+  vi.stubGlobal('window', {
+    addEventListener: vi.fn((event: string, handler: () => void) => {
+      if (event === 'resize') resizeHandlers.push(handler);
+    }),
+    removeEventListener: vi.fn(),
+    innerWidth: 800,
+    innerHeight: 600,
+  });
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: () => Promise.resolve(TEST_PLUGINS) }));
+  vi.stubGlobal('requestAnimationFrame', vi.fn((cb: (ts: number) => void) => { rafCallbacks.push(cb); return rafCallbacks.length; }));
+  vi.stubGlobal('cancelAnimationFrame', vi.fn());
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
+
+describe('PluginManager', () => {
+  // Dynamic import so stubs are in place
+  async function createManager() {
+    const { PluginManager } = await import('../plugin-manager.js');
+    return new PluginManager(mockCanvas(), mockAudioEngine());
+  }
+
+  describe('loadPlugin', () => {
+    it('fetches plugin list from /api/plugins', async () => {
+      const mgr = await createManager();
+      await mgr.loadPlugin('test-gradient');
+      expect(fetch).toHaveBeenCalledWith('/api/plugins');
+      mgr.dispose();
+    });
+
+    it('stores the active plugin entry', async () => {
+      const mgr = await createManager();
+      await mgr.loadPlugin('test-gradient');
+      expect(mgr.activePlugin).toEqual(TEST_PLUGINS[0]);
+      mgr.dispose();
+    });
+
+    it('throws for unknown plugin id', async () => {
+      const mgr = await createManager();
+      await expect(mgr.loadPlugin('nonexistent')).rejects.toThrow('Plugin not found');
+      mgr.dispose();
+    });
+
+    it('starts the render loop', async () => {
+      const mgr = await createManager();
+      await mgr.loadPlugin('test-gradient');
+      expect(requestAnimationFrame).toHaveBeenCalled();
+      mgr.dispose();
+    });
+
+    it('destroys previous plugin before loading new one', async () => {
+      const mgr = await createManager();
+      await mgr.loadPlugin('test-gradient');
+      await mgr.loadPlugin('test-gradient');
+      expect(cancelAnimationFrame).toHaveBeenCalled();
+      mgr.dispose();
+    });
+  });
+
+  describe('destroyPlugin', () => {
+    it('stops the render loop', async () => {
+      const mgr = await createManager();
+      await mgr.loadPlugin('test-gradient');
+      mgr.destroyPlugin();
+      expect(cancelAnimationFrame).toHaveBeenCalled();
+    });
+
+    it('clears active plugin', async () => {
+      const mgr = await createManager();
+      await mgr.loadPlugin('test-gradient');
+      mgr.destroyPlugin();
+      expect(mgr.activePlugin).toBeNull();
+    });
+  });
+
+  describe('render loop', () => {
+    it('calls plugin render on each frame', async () => {
+      const mgr = await createManager();
+      await mgr.loadPlugin('test-gradient');
+
+      const mockPlugin: VisualizerPlugin = {
+        type: 'shader', init: vi.fn(), render: vi.fn(), resize: vi.fn(), destroy: vi.fn(),
+      };
+      (mgr as unknown as { plugin: VisualizerPlugin }).plugin = mockPlugin;
+
+      rafCallbacks[rafCallbacks.length - 1](16.67);
+      expect(mockPlugin.render).toHaveBeenCalledWith(16.67, EMPTY_AUDIO);
+      mgr.dispose();
+    });
+  });
+
+  describe('resize', () => {
+    it('calls plugin resize on window resize', async () => {
+      const mgr = await createManager();
+      await mgr.loadPlugin('test-gradient');
+
+      const mockPlugin: VisualizerPlugin = {
+        type: 'shader', init: vi.fn(), render: vi.fn(), resize: vi.fn(), destroy: vi.fn(),
+      };
+      (mgr as unknown as { plugin: VisualizerPlugin }).plugin = mockPlugin;
+
+      (window as unknown as Record<string, number>).innerWidth = 1920;
+      (window as unknown as Record<string, number>).innerHeight = 1080;
+      resizeHandlers[0]();
+
+      expect(mockPlugin.resize).toHaveBeenCalledWith(1920, 1080);
+      mgr.dispose();
+    });
+  });
+
+  describe('dispose', () => {
+    it('removes resize listener', async () => {
+      const mgr = await createManager();
+      mgr.dispose();
+      expect(window.removeEventListener).toHaveBeenCalledWith('resize', expect.any(Function));
+    });
+  });
+});

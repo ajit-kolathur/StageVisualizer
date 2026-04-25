@@ -5,6 +5,7 @@ import { networkInterfaces } from 'os';
 import { readFileSync, existsSync } from 'fs';
 import { resolve, join } from 'path';
 import { fileURLToPath } from 'url';
+import { scanPlugins } from './plugin-scanner.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const root = resolve(__dirname, '..');
@@ -19,6 +20,13 @@ const PORT = Number(process.env.PORT ?? config.port ?? 3000);
 const app = express();
 const httpServer = createServer(app);
 const io = new SocketIOServer(httpServer);
+
+// Scan plugins on startup
+const pluginRegistry = scanPlugins(join(root, 'plugins'));
+console.log(`[server] Found ${pluginRegistry.length} plugin(s)`);
+
+// REST API
+app.get('/api/plugins', (_req, res) => { res.json(pluginRegistry); });
 
 // Serve plugin static assets
 app.use('/plugins', express.static(join(root, 'plugins')));

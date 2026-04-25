@@ -1,0 +1,8 @@
+{
+  "name": "Test Gradient",
+  "type": "shader",
+  "description": "Audio-reactive gradient for testing",
+  "author": "StageVisualizer",
+  "tags": ["test", "gradient"],
+  "shader": "shader.frag"
+}
