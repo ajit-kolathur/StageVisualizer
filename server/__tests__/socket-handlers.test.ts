@@ -24,10 +24,20 @@ function waitFor<T>(socket: ClientSocket, event: string): Promise<T> {
   return new Promise(resolve => socket.once(event, resolve));
 }
 
+async function authAdmin(): Promise<ClientSocket> {
+  const client = connect();
+  await waitFor(client, 'state-sync');
+  client.emit('auth', { pin: '1234' });
+  await waitFor(client, 'auth-result');
+  return client;
+}
+
 beforeAll(async () => {
   httpServer = createServer();
   io = new SocketIOServer(httpServer);
   state = new AppStateManager(PLUGINS, '1234');
+  state.setSetlists([{ id: 'demo', name: 'Demo' }]);
+  state.setSetlistLoader((id) => id === 'demo' ? { id: 'demo', name: 'Demo', entries: [{ song: 'Song1', pluginId: 'fractal-pulse' }] } : null);
   setupSocketHandlers(io, state);
   await new Promise<void>(resolve => httpServer.listen(0, resolve));
   const addr = httpServer.address();
@@ -181,5 +191,44 @@ describe('Socket.IO handlers', () => {
 
     admin.disconnect();
     display.disconnect();
+  });
+
+  it('set-mode switches to gig mode and emits state-sync', async () => {
+    const admin = await authAdmin();
+    admin.emit('set-mode', { mode: 'gig', setlistId: 'demo' });
+    const sync = await waitFor<StateSyncPayload>(admin, 'state-sync');
+    expect(sync.mode).toBe('gig');
+    expect(sync.activeSetlist?.id).toBe('demo');
+    admin.disconnect();
+  });
+
+  it('set-mode switches back to generic', async () => {
+    const admin = await authAdmin();
+    admin.emit('set-mode', { mode: 'gig', setlistId: 'demo' });
+    await waitFor(admin, 'state-sync');
+    admin.emit('set-mode', { mode: 'generic' });
+    const sync = await waitFor<StateSyncPayload>(admin, 'state-sync');
+    expect(sync.mode).toBe('generic');
+    expect(sync.activeSetlist).toBeNull();
+    admin.disconnect();
+  });
+
+  it('set-mode with invalid setlist does not change state', async () => {
+    state.setMode('generic');
+    const admin = await authAdmin();
+    admin.emit('set-mode', { mode: 'gig', setlistId: 'nonexistent' });
+    await new Promise(r => setTimeout(r, 50));
+    expect(state.mode).toBe('generic');
+    admin.disconnect();
+  });
+
+  it('mark-done toggles done state and emits state-sync', async () => {
+    const admin = await authAdmin();
+    admin.emit('set-mode', { mode: 'gig', setlistId: 'demo' });
+    await waitFor(admin, 'state-sync');
+    admin.emit('mark-done', { songIndex: 0 });
+    const sync = await waitFor<StateSyncPayload>(admin, 'state-sync');
+    expect(sync.doneSet).toContain(0);
+    admin.disconnect();
   });
 });

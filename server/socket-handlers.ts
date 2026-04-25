@@ -1,6 +1,6 @@
 import type { Server as SocketIOServer } from 'socket.io';
 import type { AppStateManager } from './state.js';
-import type { AuthPayload, SwitchPluginPayload, SetGainPayload } from '../client/shared/types.js';
+import type { AuthPayload, SwitchPluginPayload, SetGainPayload, SetModePayload, MarkDonePayload } from '../client/shared/types.js';
 
 export function setupSocketHandlers(io: SocketIOServer, state: AppStateManager): void {
   io.on('connection', (socket) => {
@@ -24,6 +24,22 @@ export function setupSocketHandlers(io: SocketIOServer, state: AppStateManager):
     socket.on('set-gain', (payload: SetGainPayload) => {
       state.setGain(payload.gain);
       io.emit('gain-changed', { gain: state.gain });
+      io.in('admin').emit('state-sync', state.getSync());
+    });
+
+    socket.on('set-mode', (payload: SetModePayload) => {
+      if (!socket.rooms.has('admin')) return;
+      const ok = state.setMode(payload.mode, payload.setlistId);
+      if (ok) io.in('admin').emit('state-sync', state.getSync());
+    });
+
+    socket.on('mark-done', (payload: MarkDonePayload) => {
+      if (!socket.rooms.has('admin')) return;
+      if (state.getSync().doneSet.includes(payload.songIndex)) {
+        state.unmarkDone(payload.songIndex);
+      } else {
+        state.markDone(payload.songIndex);
+      }
       io.in('admin').emit('state-sync', state.getSync());
     });
 
