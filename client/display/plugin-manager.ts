@@ -1,6 +1,7 @@
 import type { AudioData, PluginRegistryEntry, VisualizerPlugin } from '../shared/types.js';
 import type { AudioEngine } from '../shared/audio-engine.js';
 import { createRenderer } from './renderers/factory.js';
+import { TransitionManager } from './transition.js';
 
 export class PluginManager {
   private canvas: HTMLCanvasElement;
@@ -8,11 +9,27 @@ export class PluginManager {
   private plugin: VisualizerPlugin | null = null;
   private animId = 0;
   private currentEntry: PluginRegistryEntry | null = null;
+  private transition: TransitionManager;
+  private switching = false;
 
   constructor(canvas: HTMLCanvasElement, audioEngine: AudioEngine) {
     this.canvas = canvas;
     this.audioEngine = audioEngine;
+    this.transition = new TransitionManager();
     window.addEventListener('resize', this.onResize);
+  }
+
+  async switchPlugin(pluginId: string): Promise<void> {
+    if (this.switching) return;
+    this.switching = true;
+    try {
+      if (this.plugin) await this.transition.fadeOut();
+      this.destroyPlugin();
+      await this.loadPlugin(pluginId);
+      await this.transition.fadeIn();
+    } finally {
+      this.switching = false;
+    }
   }
 
   async loadPlugin(pluginId: string): Promise<void> {

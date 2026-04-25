@@ -1,0 +1,8 @@
+{
+  "name": "Kaleidoscope Wave",
+  "type": "shader",
+  "description": "Audio-reactive kaleidoscope with wave distortion",
+  "author": "StageVisualizer",
+  "tags": ["kaleidoscope", "audio-reactive", "geometric"],
+  "shader": "shader.frag"
+}

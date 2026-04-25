@@ -13,6 +13,18 @@ vi.mock('../renderers/factory.js', () => ({
   })),
 }));
 
+// Mock transition manager
+let fadeOutResolve: (() => void) | null;
+let fadeInResolve: (() => void) | null;
+vi.mock('../transition.js', () => {
+  return {
+    TransitionManager: class {
+      fadeOut() { return new Promise<void>(r => { fadeOutResolve = r; }); }
+      fadeIn() { return new Promise<void>(r => { fadeInResolve = r; }); }
+    },
+  };
+});
+
 const EMPTY_AUDIO: AudioData = {
   frequencyData: new Uint8Array(1024),
   timeDomainData: new Uint8Array(1024),
@@ -37,6 +49,8 @@ let rafCallbacks: ((ts: number) => void)[];
 beforeEach(() => {
   resizeHandlers = [];
   rafCallbacks = [];
+  fadeOutResolve = null;
+  fadeInResolve = null;
 
   vi.stubGlobal('window', {
     addEventListener: vi.fn((event: string, handler: () => void) => {
@@ -155,6 +169,42 @@ describe('PluginManager', () => {
       const mgr = await createManager();
       mgr.dispose();
       expect(window.removeEventListener).toHaveBeenCalledWith('resize', expect.any(Function));
+    });
+  });
+
+  describe('switchPlugin', () => {
+    it('performs fade-out then load then fade-in', async () => {
+      const mgr = await createManager();
+      await mgr.loadPlugin('test-gradient');
+
+      const switchPromise = mgr.switchPlugin('test-gradient');
+      fadeOutResolve!();
+      await vi.waitFor(() => { if (!fadeInResolve) throw new Error('waiting'); });
+      fadeInResolve!();
+      await switchPromise;
+      expect(mgr.activePlugin).toEqual(TEST_PLUGINS[0]);
+      mgr.dispose();
+    });
+
+    it('skips fadeOut on first switch when no plugin is active', async () => {
+      const mgr = await createManager();
+      const switchPromise = mgr.switchPlugin('test-gradient');
+      await vi.waitFor(() => { if (!fadeInResolve) throw new Error('waiting'); });
+      fadeInResolve!();
+      await switchPromise;
+      expect(mgr.activePlugin).toEqual(TEST_PLUGINS[0]);
+      mgr.dispose();
+    });
+
+    it('ignores switch while transition is in progress', async () => {
+      const mgr = await createManager();
+      const first = mgr.switchPlugin('test-gradient');
+      const second = mgr.switchPlugin('test-gradient');
+      await second;
+      await vi.waitFor(() => { if (!fadeInResolve) throw new Error('waiting'); });
+      fadeInResolve!();
+      await first;
+      mgr.dispose();
     });
   });
 });
