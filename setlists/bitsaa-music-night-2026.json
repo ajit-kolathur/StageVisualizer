@@ -1,6 +1,8 @@
 {
   "name": "BITSAA Music Night 2026",
   "entries": [
+    { "song": "— Event Landing", "pluginId": "press-photos" },
+    { "song": "— Intermission", "pluginId": "_fallback" },
     { "song": "Yeh Fitoor / Bekhayali Medley", "pluginId": "butterchurn:_Geiss - Artifact 01" },
     { "song": "Pichle Saat Dino", "pluginId": "butterchurn:$$$ Royal - Mashup (197)" },
     { "song": "Anjaane Kyun", "pluginId": "butterchurn:$$$ Royal - Mashup (220)" },
